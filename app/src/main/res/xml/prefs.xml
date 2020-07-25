@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference
+        android:key="@string/pref_camtrig_key"
+        android:title="@string/pref_camtrig_title"
+        android:summary="%s"
+        android:dialogTitle="@string/pref_camtrig_title"
+        android:entries="@array/pref_camtrig_entries"
+        android:entryValues="@array/pref_camtrig_values"
+        android:defaultValue="@string/pref_camtrig_default"/>
+</PreferenceScreen>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="pref_camtrig_values">
+        <item>Phone Rotation</item>
+        <item>Sensor Input</item>
+    </string-array>
+    <string-array name="pref_camtrig_entries">
+        <item>rotation</item>
+        <item>sensor</item>
+    </string-array>
+</resources>
