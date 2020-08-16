@@ -3,4 +3,5 @@
     <string name="pref_camtrig_title">Trigger camera by...</string>
     <string name="pref_camtrig_key">pref_camtrig</string>
     <string name="pref_camtrig_default">rotation</string>
+    <string name="take_picture">Take picture</string>
 </resources>
