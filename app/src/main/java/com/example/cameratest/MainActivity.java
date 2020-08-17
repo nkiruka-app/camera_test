@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }   // the static block is executed exactly once, to load in these array elements
 
-    // TextureListener
+    // TextureListener - listens for changes related to the SurfaceTexture?
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
@@ -99,23 +99,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        textureView = (TextureView) findViewById(R.id.texture);
-        textureView.setSurfaceTextureListener(textureListener);
-
-        takePictureButton = (Button) findViewById(R.id.btn_takepicture);
-        takePictureButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                takePicture();
-            }
-        });
-    }
-
+    // Its member functions get triggered when changes in camera occur
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(CameraDevice camera) {
@@ -134,6 +118,8 @@ public class MainActivity extends AppCompatActivity {
             cameraDevice = null;
         }
     };
+
+    // After the capture has been completed, this signals to user and calls createCameraPreview()
     final CameraCaptureSession.CaptureCallback captureCallbackListener = new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
@@ -142,11 +128,15 @@ public class MainActivity extends AppCompatActivity {
             createCameraPreview();
         }
     };
+
+    // Makes a new thread and assigns it to a Handler
     protected void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("Camera Background");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
+
+    // Stops the background thread
     protected void stopBackgroundThread() {
         mBackgroundThread.quitSafely();
         try {
@@ -157,8 +147,10 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
+    // somehow takes the picture...
     protected void takePicture() {
-        if(null == cameraDevice) {
+        if(cameraDevice == null) {
             Log.e(TAG, "cameraDevice is null");
             return;
         }
@@ -171,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
             }
             int width = 640;
             int height = 480;
-            if (jpegSizes != null && 0 < jpegSizes.length) {
+            if (jpegSizes != null && jpegSizes.length > 0) {
                 width = jpegSizes[0].getWidth();
                 height = jpegSizes[0].getHeight();
             }
@@ -245,6 +237,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Initializes the camera preview (calls updatePreview)
     protected void createCameraPreview() {
         try {
             SurfaceTexture texture = textureView.getSurfaceTexture();
@@ -325,6 +318,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    // onCreate is where I would add a "rotate camera" button
+    @Override   // initializes layout ids and configures the button action
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        textureView = (TextureView) findViewById(R.id.texture);
+        textureView.setSurfaceTextureListener(textureListener);
+
+        takePictureButton = (Button) findViewById(R.id.btn_takepicture);
+        takePictureButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takePicture();
+            }
+        });
+    }
+
     @Override   // I guess this is what handles the permission request?
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
@@ -356,15 +368,13 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    // creates the menu icon
-    @Override
+    @Override   // creates the menu icon
     public boolean onCreateOptionsMenu(Menu menu){
         getMenuInflater().inflate(R.menu.camera_test_menu, menu);
         return true;
     }
 
-    // allows clicking on menu icon
-    @Override
+    @Override   // allows clicking on menu icon
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()) {
             case R.id.action_menu:
@@ -379,6 +389,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // This is my own function - checks whether the menu setting has changed and returns the trigger
     private String checkSettingChanged() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String trigger = sharedPreferences.getString(
