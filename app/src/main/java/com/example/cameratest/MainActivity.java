@@ -25,6 +25,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -50,6 +51,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.pytorch.Tensor;
 
 import com.example.cameratest.pytorchMicrophone.MicrophoneHelper;
 
@@ -338,21 +341,25 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
                 takePicture();
             }
         });
-      
-        TextView testext = findViewById(R.id.tv_testext);
-        testext.setText(checkSettingChanged());
 
         mMicHelper = new MicrophoneHelper(this);
     }
 
     @Override   // I guess this is what handles the permission request?
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 // close the app
                 Toast.makeText(MainActivity.this, "Sorry! You can't use this app without granting permission", Toast.LENGTH_LONG).show();
                 finish();
             }
+        }
+
+        if(!mMicHelper.onPermissionResult(requestCode, permissions, grantResults)){
+            Log.d(MainActivity.class.getName(), "Mic Helper Returned False on Permission Result. Could not Resolve Permission!");
+        }else{
+            tryRecording();
         }
     }
 
@@ -388,16 +395,6 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(!mMicHelper.onPermissionResult(requestCode, permissions, grantResults)){
-            Log.d(MainActivity.class.getName(), "Mic Helper Returned False on Permission Result. Could not Resolve Permission!");
-        }else{
-            tryRecording();
-        }
-    }
-
     public void tryRecording(){
         Log.d(MainActivity.class.getName(), "Starting the recording!");
         mMicHelper.startRecording();
@@ -422,7 +419,7 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
                         Log.d("Lambda Expression", "Recording Stopped!");
                     }
                 }
-        ).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null);
+        ).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
     }
         
 
