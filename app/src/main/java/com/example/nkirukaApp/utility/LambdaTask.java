@@ -1,7 +1,6 @@
-package com.example.cameratest;
+package com.example.nkirukaApp.utility;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.AsyncTask;
 
 import java.lang.ref.WeakReference;

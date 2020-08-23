@@ -1,18 +1,20 @@
-package com.example.cameratest.pytorchMicrophone;
+package com.example.nkirukaApp.pytorchMicrophone;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.PermissionChecker;
 
+import com.example.nkirukaApp.MainActivity;
+import com.example.nkirukaApp.utility.LambdaTask;
+
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 
 public class MicrophoneHelper {
 
@@ -51,7 +53,7 @@ public class MicrophoneHelper {
             return true;
         }
         ActivityCompat.requestPermissions(activity, new String[]{MIC_PERMISSION}, REQUEST_RECORD_AUDIO_PERMISSION);
-        return true;
+        return false;
     }
 
     public boolean onPermissionResult(
@@ -60,7 +62,7 @@ public class MicrophoneHelper {
             @NonNull int[] grantResults
     ){
         if(requestCode == REQUEST_RECORD_AUDIO_PERMISSION){
-            hasPermission =  (grantResults[0] == PackageManager.PERMISSION_GRANTED);
+            hasPermission =  (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
             return hasPermission;
         }
 
@@ -102,5 +104,32 @@ public class MicrophoneHelper {
         }
 
         return false;
+    }
+
+    public void tryRecording(Activity activity){
+        Log.d(MainActivity.class.getName(), "Starting the recording!");
+        startRecording();
+        new LambdaTask(activity,
+                new LambdaTask.Task() {
+                    @Override
+                    public void task() {
+                        try {
+                            Log.d("Lambda Expression", "Sleeping!");
+                            Thread.sleep(1000);
+                            Log.d("Lambda Expression", "Done Sleeping!");
+                        }catch(Exception e){
+                            Log.d("Lambda Expression", "Sleep Interrupted");
+                        }
+                    }
+                },
+                new LambdaTask.Task() {
+                    @Override
+                    public void task() {
+                        Log.d("Lambda Expression", "Stopping The Recording!");
+                        stopRecording();
+                        Log.d("Lambda Expression", "Recording Stopped!");
+                    }
+                }
+        ).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
     }
 }

@@ -1,4 +1,4 @@
-package com.example.cameratest;
+package com.example.nkirukaApp;
 
 import org.junit.Test;
 
