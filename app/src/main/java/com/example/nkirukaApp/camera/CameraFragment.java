@@ -39,18 +39,12 @@ public class CameraFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.camera_view, container, true);
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        View view = inflater.inflate(R.layout.camera_view, container, true);
         Log.d(TAG, "Populating Fields!");
-
-        // TODO BUGG!!
-        textureView = getActivity().findViewById(R.id.texture);
+        textureView = view.findViewById(R.id.texture);
         Log.d(TAG, "Texture View: " + textureView.toString());
-        takePictureButton = getActivity().findViewById(R.id.btn_takepicture);
+        takePictureButton = view.findViewById(R.id.btn_takepicture);
+        return view;
     }
 
 
