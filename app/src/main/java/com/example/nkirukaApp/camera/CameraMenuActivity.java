@@ -1,14 +1,16 @@
-package com.example.cameratest;
+package com.example.nkirukaApp.camera;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 
-public class cameramenu extends AppCompatActivity {
+import com.example.nkirukaApp.R;
+
+public class CameraMenuActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_cameramenu);
+        setContentView(R.layout.activity_camera_menu);
     }
 }
