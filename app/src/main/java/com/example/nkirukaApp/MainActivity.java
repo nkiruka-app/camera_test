@@ -101,16 +101,20 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
     @Override   // I guess this is what handles the permission request?
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(!mCameraHelper.onPermissionResult(requestCode, permissions, grantResults)) {
-            // close the app
+        if (!mCameraHelper.onPermissionResult(requestCode, permissions, grantResults)
+            && !mMicHelper.onPermissionResult(requestCode, permissions, grantResults)
+            && grantResults.length > 0
+        ) {
+            /* Sometimes This method returns with no results which is weird af...
+             * but we shouldn't kick the user on this occurrence. Instead we should
+             * close the app if they reject either (both) permissions in a given response. And there
+             * was one to respond to.
+             */
             Toast.makeText(MainActivity.this, "Sorry! You can't use this app without granting permission", Toast.LENGTH_LONG).show();
             finish();
-        }
-
-        if(!mMicHelper.onPermissionResult(requestCode, permissions, grantResults)){
-            Log.d(MainActivity.class.getName(), "Mic Helper Returned False on Permission Result. Could not Resolve Permission!");
-        }else{
-            mMicHelper.tryRecording(this);
+        }else if(grantResults.length > 0){
+            // Without the if, the function would just keep calling the function below... icky!
+            turnOnIO();
         }
     }
 
@@ -140,19 +144,7 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(MainActivity.class.getName(), "Starting The Recording");
-        if(mMicHelper.onRequestPermission(this)){
-            Log.d(MainActivity.class.getName(), "Already Had Mic Permission!");
-            mMicHelper.tryRecording(this);
-        }else{
-            Log.d(MainActivity.class.getName(), "Grabbed Mic Permission!");
-        }
-
-        if(mCameraHelper.requestPermission(this)){
-            Log.d(MainActivity.class.getName(), "Already Had Cam Permission!");
-        }else{
-            Log.d(MainActivity.class.getName(), "Grabbed Cam Permission!");
-        }
+        turnOnIO();
     }
         
 
@@ -177,6 +169,8 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
         }
     }
 
+    /********* HAND CRAFTED HELPER FUNCTIONS ********/
+
     // This is my own function - checks whether the menu setting has changed and returns the trigger
     private String checkSettingChanged() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -187,6 +181,7 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
         return trigger;
     }
 
+    // TODO make this an anonymous class rather than an implemented method
     @Override
     public void onCommandEvent(MicrophoneHelper.CommandEvent command) {
         switch(command){
@@ -198,6 +193,24 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
                 break;
             default:
                 Log.e(MainActivity.class.getName(), "Unknown Command Received!!");
+        }
+    }
+
+    private void turnOnIO(){
+        if(mCameraHelper.requestPermission(this)){
+            Log.d(MainActivity.class.getName(), "Already Had Cam Permission!");
+        }else{
+            Log.d(MainActivity.class.getName(), "Grabbed Cam Permission!");
+            // Can Only Grab 1 permission at a time!
+            return;
+        }
+
+        Log.d(MainActivity.class.getName(), "Starting The Recording");
+        if(mMicHelper.onRequestPermission(this)){
+            Log.d(MainActivity.class.getName(), "Already Had Mic Permission!");
+            mMicHelper.tryRecording(this);
+        }else{
+            Log.d(MainActivity.class.getName(), "Grabbed Mic Permission!");
         }
     }
 }

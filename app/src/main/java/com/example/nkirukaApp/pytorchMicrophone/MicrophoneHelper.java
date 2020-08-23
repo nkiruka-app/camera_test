@@ -18,6 +18,8 @@ import java.io.IOException;
 
 public class MicrophoneHelper {
 
+    private static final String TAG = MicrophoneHelper.class.getName();
+
     public enum CommandEvent {
         NOTHING,
         TAKE_PICTURE
@@ -63,6 +65,7 @@ public class MicrophoneHelper {
     ){
         if(requestCode == REQUEST_RECORD_AUDIO_PERMISSION){
             hasPermission =  (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
+            Log.d(TAG, "Attempted Mic Permission: " + (Boolean.valueOf(hasPermission)).toString());
             return hasPermission;
         }
 

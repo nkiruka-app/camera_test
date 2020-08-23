@@ -311,11 +311,10 @@ public class CameraIOHelper {
             @NonNull int[] grantResults
     ){
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                return false;
-            }else{
-                return true;
-            }
+                boolean hasPermission = grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                Log.d(TAG, "Attempted Cam Permission: " + (Boolean.valueOf(hasPermission)).toString());
+                return hasPermission;
         }
 
         return false;
