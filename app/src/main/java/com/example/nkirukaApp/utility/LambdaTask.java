@@ -12,7 +12,7 @@ public class LambdaTask extends AsyncTask<Void, Void, Void> {
     public Task onFinish = null;
 
     public interface Task{
-        void task();
+        void task(WeakReference<Activity> activity);
     }
 
     public LambdaTask(Activity activity, Task onRun, Task onFinish){
@@ -23,7 +23,7 @@ public class LambdaTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     protected Void doInBackground(Void... voids) {
-        this.onRun.task();
+        this.onRun.task(activityWeakReference);
 
         return null;
     }
@@ -34,7 +34,7 @@ public class LambdaTask extends AsyncTask<Void, Void, Void> {
 
         Activity activity = activityWeakReference.get();
         if(activity != null && !activity.isFinishing() ) {
-            this.onFinish.task();
+            this.onFinish.task(activityWeakReference);
         }
     }
 }

@@ -11,7 +11,7 @@ public class MicrophoneFS {
     private File file = null;
 
     //TODO Clear Directory and make String cryptographically random!
-    private final String filename = "FEED_BEEF";
+    private final String filename = "FEED_BEEF.mp4";
 
     public MicrophoneFS(){ }
 

@@ -13,7 +13,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.PermissionChecker;
 
 import com.example.nkirukaApp.MainActivity;
-import com.example.nkirukaApp.utility.LambdaTask;
 
 import java.io.IOException;
 
@@ -21,17 +20,8 @@ public class MicrophoneHelper {
 
     private static final String TAG = MicrophoneHelper.class.getName();
 
-    public enum CommandEvent {
-        NOTHING,
-        TAKE_PICTURE
-    }
-
-    public interface CommandEventHandler{
-        public void onCommandEvent(CommandEvent command);
-    }
-
     // Commands for when a vocal command is resolved
-    private CommandEventHandler handle;
+    private CommandHandler handle;
 
     // Permissions Fields
     private final String MIC_PERMISSION = Manifest.permission.RECORD_AUDIO;
@@ -42,13 +32,15 @@ public class MicrophoneHelper {
     MediaRecorder recorder;
 
     // File Output
-    MicrophoneFS fs = null;
+    MicrophonePipe pipe = null;
+
+    // Background Task for Commands
+    MicrophoneReaderTask readerTask = null;
 
 
-
-    public MicrophoneHelper(CommandEventHandler handle){
+    public MicrophoneHelper(CommandHandler handle){
         this.handle = handle;
-        this.fs = new MicrophoneFS();
+        this.pipe = new MicrophonePipe();
     }
 
     public boolean onRequestPermission(Activity activity){
@@ -77,17 +69,16 @@ public class MicrophoneHelper {
         return false;
     }
 
-    public boolean startRecording(Context context){
-        if(!fs.isSetup()){
-            fs.setupFile(context);
-        }
-
+    public boolean startRecording(Activity activity){
         if(recorder == null && hasPermission){
             recorder = new MediaRecorder();
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             recorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
-            recorder.setOutputFile(fs.getFile().getPath());
+            recorder.setOutputFile(pipe.getReadDescriptor());
+
+            // Setup reading in the background
+            readerTask = new MicrophoneReaderTask(activity, pipe, handle);
             try{
                 recorder.prepare();
             }catch(IOException e){
@@ -110,8 +101,10 @@ public class MicrophoneHelper {
     public boolean stopRecording(){
         if(recorder != null){
             recorder.stop();
+            recorder.reset();
             recorder.release();
             recorder = null;
+            readerTask.shouldStop();
             return true;
         }
 
@@ -121,27 +114,5 @@ public class MicrophoneHelper {
     public void tryRecording(Activity activity){
         Log.d(MainActivity.class.getName(), "Starting the recording!");
         startRecording(activity);
-        new LambdaTask(activity,
-                new LambdaTask.Task() {
-                    @Override
-                    public void task() {
-                        try {
-                            Log.d("Lambda Expression", "Sleeping!");
-                            Thread.sleep(10000);
-                            Log.d("Lambda Expression", "Done Sleeping!");
-                        }catch(Exception e){
-                            Log.d("Lambda Expression", "Sleep Interrupted");
-                        }
-                    }
-                },
-                new LambdaTask.Task() {
-                    @Override
-                    public void task() {
-                        Log.d("Lambda Expression", "Stopping The Recording!");
-                        stopRecording();
-                        Log.d("Lambda Expression", "Recording Stopped!");
-                    }
-                }
-        ).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
     }
 }

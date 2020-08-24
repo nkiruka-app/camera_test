@@ -24,11 +24,12 @@ import android.widget.Toast;
 import com.example.nkirukaApp.camera.CameraFragment;
 import com.example.nkirukaApp.camera.CameraIOHelper;
 import com.example.nkirukaApp.camera.CameraMenuActivity;
+import com.example.nkirukaApp.pytorchMicrophone.CommandHandler;
 import com.example.nkirukaApp.pytorchMicrophone.MicrophoneHelper;
 import com.example.nkirukaApp.utility.LambdaTask;
 
 // Based on tutorial: https://inducesmile.com/android/android-camera2-api-example-tutorial/
-public class MainActivity extends AppCompatActivity implements MicrophoneHelper.CommandEventHandler {
+public class MainActivity extends AppCompatActivity implements CommandHandler {
 
     private CameraIOHelper mCameraHelper = null;
     private MicrophoneHelper mMicHelper = null;
@@ -142,6 +143,12 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
     }
 
     @Override
+    protected void onStop() {
+        mMicHelper.stopRecording();
+        super.onStop();
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
         turnOnIO();
@@ -183,13 +190,14 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
 
     // TODO make this an anonymous class rather than an implemented method
     @Override
-    public void onCommandEvent(MicrophoneHelper.CommandEvent command) {
-        switch(command){
+    public void onCommandEvent(CommandEvent event) {
+        switch(event){
             case NOTHING:
                 Log.d(MainActivity.class.getName(), "Command Received: Nothing");
                 break;
             case TAKE_PICTURE:
                 Log.d(MainActivity.class.getName(), "Command Received: Take Picture");
+                mCameraHelper.takePicture(this);
                 break;
             default:
                 Log.e(MainActivity.class.getName(), "Unknown Command Received!!");
@@ -213,4 +221,6 @@ public class MainActivity extends AppCompatActivity implements MicrophoneHelper.
             Log.d(MainActivity.class.getName(), "Grabbed Mic Permission!");
         }
     }
+
+
 }
