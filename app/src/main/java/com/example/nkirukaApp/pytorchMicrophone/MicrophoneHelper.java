@@ -2,6 +2,7 @@ package com.example.nkirukaApp.pytorchMicrophone;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
@@ -39,19 +40,23 @@ public class MicrophoneHelper {
 
     // Microphone Objects
     MediaRecorder recorder;
-    private static final String filename = "file.mp3";
+
+    // File Output
+    MicrophoneFS fs = null;
 
 
 
     public MicrophoneHelper(CommandEventHandler handle){
         this.handle = handle;
+        this.fs = new MicrophoneFS();
     }
 
     public boolean onRequestPermission(Activity activity){
         int permission = PermissionChecker.checkSelfPermission(activity.getApplicationContext(), MIC_PERMISSION);
 
-        if(permission == PermissionChecker.PERMISSION_GRANTED){
+        if(hasPermission || permission == PermissionChecker.PERMISSION_GRANTED){
             Log.d(MicrophoneHelper.class.getName(), "Already has Permission");
+            hasPermission = true;
             return true;
         }
         ActivityCompat.requestPermissions(activity, new String[]{MIC_PERMISSION}, REQUEST_RECORD_AUDIO_PERMISSION);
@@ -72,13 +77,17 @@ public class MicrophoneHelper {
         return false;
     }
 
-    public boolean startRecording(){
+    public boolean startRecording(Context context){
+        if(!fs.isSetup()){
+            fs.setupFile(context);
+        }
+
         if(recorder == null && hasPermission){
             recorder = new MediaRecorder();
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             recorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
-            recorder.setOutputFile(filename);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+            recorder.setOutputFile(fs.getFile().getPath());
             try{
                 recorder.prepare();
             }catch(IOException e){
@@ -111,14 +120,14 @@ public class MicrophoneHelper {
 
     public void tryRecording(Activity activity){
         Log.d(MainActivity.class.getName(), "Starting the recording!");
-        startRecording();
+        startRecording(activity);
         new LambdaTask(activity,
                 new LambdaTask.Task() {
                     @Override
                     public void task() {
                         try {
                             Log.d("Lambda Expression", "Sleeping!");
-                            Thread.sleep(1000);
+                            Thread.sleep(10000);
                             Log.d("Lambda Expression", "Done Sleeping!");
                         }catch(Exception e){
                             Log.d("Lambda Expression", "Sleep Interrupted");

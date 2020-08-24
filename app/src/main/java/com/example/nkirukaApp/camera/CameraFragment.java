@@ -16,10 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.example.nkirukaApp.MainActivity;
 import com.example.nkirukaApp.R;
 
-import org.w3c.dom.Text;
 
 public class CameraFragment extends Fragment {
     private static final String TAG = CameraFragment.class.getName();
@@ -39,7 +37,7 @@ public class CameraFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.camera_view, container, true);
+        View view = inflater.inflate(R.layout.camera_view, container, false);
         Log.d(TAG, "Populating Fields!");
         textureView = view.findViewById(R.id.texture);
         Log.d(TAG, "Texture View: " + textureView.toString());

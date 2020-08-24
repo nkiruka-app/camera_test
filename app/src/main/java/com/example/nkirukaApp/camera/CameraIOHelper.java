@@ -94,7 +94,8 @@ public class CameraIOHelper {
             //This is called when the camera is open
             Log.e(TAG, "onOpened");
             cameraDevice = camera;
-            preview.createCameraPreview(imageDimension.getWidth(), imageDimension.getHeight());
+            Surface surface = preview.createCameraPreview(imageDimension.getWidth(), imageDimension.getHeight());
+            setPreviewStream(surface);
         }
         @Override
         public void onDisconnected(@NonNull CameraDevice camera) {
@@ -118,28 +119,7 @@ public class CameraIOHelper {
             super.onCaptureCompleted(session, request, result);
             preview.makeToast("Saved:" + file);
             Surface surface = preview.createCameraPreview(imageDimension.getWidth(), imageDimension.getHeight());
-            try {
-                captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                captureRequestBuilder.addTarget(surface);
-                cameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback(){
-                    @Override
-                    public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                        //The camera is already closed
-                        if (null == cameraDevice) {
-                            return;
-                        }
-                        // When the session is ready, we start displaying the preview.
-                        cameraCaptureSessions = cameraCaptureSession;
-                        updatePreview();
-                    }
-                    @Override
-                    public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                        preview.makeToast("Configuration change");
-                    }
-                }, null);
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
+            setPreviewStream(surface);
         }
     };
 
@@ -291,7 +271,8 @@ public class CameraIOHelper {
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
                     preview.makeToast( "Saved:" + file);
-                    preview.createCameraPreview(imageDimension.getWidth(), imageDimension.getHeight());
+                    Surface surface = preview.createCameraPreview(imageDimension.getWidth(), imageDimension.getHeight());
+                    setPreviewStream(surface);
                 }
             };
             cameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
@@ -398,7 +379,32 @@ public class CameraIOHelper {
         if (preview.getTextureView().isAvailable()) {
             this.openCamera(context);
         } else {
-            preview.getTextureView().setSurfaceTextureListener(textureListener);
+            preview.setSurfaceListener(textureListener);
+        }
+    }
+
+    private void setPreviewStream(Surface surface){
+        try {
+            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            captureRequestBuilder.addTarget(surface);
+            cameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback(){
+                @Override
+                public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
+                    //The camera is already closed
+                    if (null == cameraDevice) {
+                        return;
+                    }
+                    // When the session is ready, we start displaying the preview.
+                    cameraCaptureSessions = cameraCaptureSession;
+                    updatePreview();
+                }
+                @Override
+                public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
+                    preview.makeToast("Configuration change");
+                }
+            }, null);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
         }
     }
 
