@@ -2,9 +2,14 @@ package com.example.nkirukaApp.camera;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -17,9 +22,12 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -37,9 +45,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class CameraIOHelper {
     private static final String TAG = CameraIOHelper.class.getName();
@@ -162,8 +173,8 @@ public class CameraIOHelper {
     }
 
 
-    // somehow takes the picture...
-    public void takePicture(Activity activity) {
+    // takes the picture by using the camera2 pipeline
+    public void takePicture(final Activity activity) {
         if(cameraDevice == null) {
             Log.e(TAG, "cameraDevice is null");
             return;
@@ -191,7 +202,10 @@ public class CameraIOHelper {
             // Orientation
             int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-            final File file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
+
+            //// If getExternalStorageDirectory() is used, then the picture is private to the app! Not very useful.
+            //final File file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
+
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
@@ -201,7 +215,15 @@ public class CameraIOHelper {
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                         byte[] bytes = new byte[buffer.capacity()];
                         buffer.get(bytes);
-                        save(bytes);
+                        //save(bytes);
+
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        if(bitmap != null) {
+                            saveImage(bitmap);
+                        }
+                        else {
+                            Log.d(TAG, "Uh oh. bitmap conversion didn't work...");
+                        }
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     } catch (IOException e) {
@@ -212,6 +234,8 @@ public class CameraIOHelper {
                         }
                     }
                 }
+
+                // this is where the saving to file occurs!
                 private void save(byte[] bytes) throws IOException {
                     OutputStream output = null;
                     try {
@@ -223,7 +247,44 @@ public class CameraIOHelper {
                         }
                     }
                 }
+
+
+                // from https://stackoverflow.com/a/59536115 and https://developer.android.com/training/camera/photobasics#TaskGallery
+                private void saveImage(Bitmap bitmap) throws IOException {
+                    OutputStream fos;
+
+                    bitmap = RotateBitmap(bitmap, 90);
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                    String name = "JPEG_" + timeStamp;
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        ContentResolver resolver = activity.getContentResolver();
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, name + ".jpg");
+                        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg");
+                        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES);
+                        Uri imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+                        fos = resolver.openOutputStream(Objects.requireNonNull(imageUri));
+                    } else {
+                        String imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+                        File image = new File(imagesDir, name + ".jpg");
+                        fos = new FileOutputStream(image);
+                    }
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                    Objects.requireNonNull(fos).close();
+                }
+
+                // https://stackoverflow.com/a/49914827
+                private Bitmap RotateBitmap(Bitmap source, float angle)
+                {
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(angle);
+                    return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+                }
+
+
             };
+
             reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
             final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
                 @Override
