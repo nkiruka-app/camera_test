@@ -115,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
 
         button = findViewById(R.id.recordButton);
         button.setOnClickListener(recordingButtonListener);
+        PytorchFunctions.loadModule(this);
     }
 
     @Override   // I guess this is what handles the permission request?
