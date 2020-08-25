@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
 
         button = findViewById(R.id.recordButton);
         button.setOnClickListener(recordingButtonListener);
-        PytorchFunctions.loadModule(this);
+        //PytorchFunctions.loadModule(this);
     }
 
     @Override   // I guess this is what handles the permission request?
@@ -257,8 +257,12 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
             if(mMicHelper != null){
                 mMicHelper.stopRecording();
             }
+            Toast.makeText(MainActivity.this,
+                    "Sorry! This part of the app is still under construction! " +
+                            "Please try again later!",
+                    Toast.LENGTH_LONG).show();
 
-            new LambdaTask(MainActivity.this,
+            /*new LambdaTask(MainActivity.this,
                     new LambdaTask.Task() {
                         @Override
                         public void task(WeakReference<Activity> activity) {
@@ -299,7 +303,7 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
                             Log.d("Lambda Task", "Finished Processing!");
 
                         }
-                    }).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
+                    }).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);*/
         }
     };
 
