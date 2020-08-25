@@ -5,4 +5,5 @@
     <string name="pref_camtrig_default">rotation</string>
     <string name="take_picture">Take picture</string>
     <string name="record">Say Command</string>
+    <string name="dont_record">Command Done</string>
 </resources>

@@ -5,12 +5,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.SurfaceTexture;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
+import android.os.Environment;
 import android.util.Log;
 
 import android.view.Menu;
@@ -18,15 +20,29 @@ import android.view.MenuItem;
 
 import android.view.TextureView;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 
+import com.arthenica.mobileffmpeg.Config;
+import com.arthenica.mobileffmpeg.ExecuteCallback;
+import com.arthenica.mobileffmpeg.FFmpeg;
 import com.example.nkirukaApp.camera.CameraFragment;
 import com.example.nkirukaApp.camera.CameraIOHelper;
 import com.example.nkirukaApp.camera.CameraMenuActivity;
 import com.example.nkirukaApp.pytorchMicrophone.CommandHandler;
 import com.example.nkirukaApp.pytorchMicrophone.MicrophoneHelper;
+import com.example.nkirukaApp.pytorchMicrophone.PytorchFunctions;
 import com.example.nkirukaApp.utility.LambdaTask;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+
+import static com.arthenica.mobileffmpeg.Config.RETURN_CODE_CANCEL;
+import static com.arthenica.mobileffmpeg.Config.RETURN_CODE_SUCCESS;
 
 // Based on tutorial: https://inducesmile.com/android/android-camera2-api-example-tutorial/
 public class MainActivity extends AppCompatActivity implements CommandHandler {
@@ -97,6 +113,8 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
         setContentView(R.layout.activity_main);
         mMicHelper = new MicrophoneHelper(this);
 
+        button = findViewById(R.id.recordButton);
+        button.setOnClickListener(recordingButtonListener);
     }
 
     @Override   // I guess this is what handles the permission request?
@@ -209,6 +227,80 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
             Log.d(MainActivity.class.getName(), "Grabbed Mic Permission!");
         }
     }
+
+    /***************** BUTTON FUNCTIONS *************************/
+    boolean isRecording = false;
+    Button button = null;
+
+    final View.OnClickListener recordingButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if(isRecording){
+                button.setText(R.string.record);
+                recordingOff();
+            }else{
+                button.setText(R.string.dont_record);
+                recordingOn();
+            }
+
+            isRecording = !isRecording;
+        }
+
+        private void recordingOn(){
+            if(mMicHelper != null){
+                mMicHelper.startRecording(MainActivity.this);
+            }
+        }
+
+        private void recordingOff(){
+            if(mMicHelper != null){
+                mMicHelper.stopRecording();
+            }
+
+            new LambdaTask(MainActivity.this,
+                    new LambdaTask.Task() {
+                        @Override
+                        public void task(WeakReference<Activity> activity) {
+                            final File outfile = new File(getFilesDir(), "song.wav");
+                            Log.d("Lambda Task", "Processing File!");
+                            String command = "-i "
+                                    + mMicHelper.getFileSystem().getFile().getPath()
+                                    + " -acodec pcm_u8 -ar 22050 -y ";
+                            command += outfile.getPath();
+                            long executionId = FFmpeg.executeAsync(command, new ExecuteCallback() {
+
+                                @Override
+                                public void apply(final long executionId, final int rc) {
+                                    if (rc == RETURN_CODE_SUCCESS) {
+                                        Log.i(Config.TAG, "Async command execution completed successfully.");
+                                        try {
+                                            // TODO Convert to byte array in a different way!
+                                            byte[] array = Files.readAllBytes(outfile.toPath());
+
+                                            CommandEvent event = PytorchFunctions.containsCommand(array);
+                                            onCommandEvent(event);
+                                        }catch(IOException e){
+                                            Log.e(TAG, "IOException occurred!");
+                                            Log.e(TAG, e.toString());
+                                        }
+                                    } else if (rc == RETURN_CODE_CANCEL) {
+                                        Log.i(Config.TAG, "Async command execution cancelled by user.");
+                                    } else {
+                                        Log.i(Config.TAG, String.format("Async command execution failed with rc=%d.", rc));
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    new LambdaTask.Task() {
+                        @Override
+                        public void task(WeakReference<Activity> activity) {
+                            Log.d("Lambda Task", "Finished Processing!");
+
+                        }
+                    }).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
+        }
+    };
 
 
 }

@@ -12,7 +12,7 @@ public class MicrophoneFS {
     private File file = null;
 
     //TODO Clear Directory and make String cryptographically random!
-    private final String filename = "FEED_BEEF.3gpp";
+    private final String filename = "FEED_BEEF.AAC";
 
     public MicrophoneFS(){ }
 

@@ -12,7 +12,9 @@ public class PytorchFunctions {
      */
 
     public static CommandHandler.CommandEvent containsCommand(byte[] array){
-        Log.d(TAG, "Received Array:" + Arrays.toString(array));
+        Log.d(TAG, "Received Array:");
+        Log.d(TAG, Arrays.toString(array));
+        
 
         return CommandHandler.CommandEvent.NOTHING;
     }
