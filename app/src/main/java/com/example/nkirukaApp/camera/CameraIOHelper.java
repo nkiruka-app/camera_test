@@ -103,8 +103,14 @@ public class CameraIOHelper {
         }
         @Override
         public void onError(@NonNull CameraDevice camera, int error) {
-            cameraDevice.close();
-            cameraDevice = null;
+            Log.e(TAG, "Error Setting up Camera Device");
+
+            if(cameraDevice != null) {
+                cameraDevice.close();
+                cameraDevice = null;
+            }else{
+                camera.close();
+            }
         }
     };
 

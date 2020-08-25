@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 
 public class MicrophoneFS {
@@ -11,7 +12,7 @@ public class MicrophoneFS {
     private File file = null;
 
     //TODO Clear Directory and make String cryptographically random!
-    private final String filename = "FEED_BEEF.mp4";
+    private final String filename = "FEED_BEEF.3gpp";
 
     public MicrophoneFS(){ }
 

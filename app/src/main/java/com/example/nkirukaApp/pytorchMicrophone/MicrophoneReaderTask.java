@@ -68,6 +68,7 @@ public class MicrophoneReaderTask{
         input = pipe.getReadDescriptor();
         inputStream = new FileInputStream(input);
         task = new LambdaTask(activity, start, finish);
+        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
         this.handle = handle;
     }
 

@@ -14,6 +14,7 @@ import androidx.core.content.PermissionChecker;
 
 import com.example.nkirukaApp.MainActivity;
 
+import java.io.File;
 import java.io.IOException;
 
 public class MicrophoneHelper {
@@ -32,15 +33,17 @@ public class MicrophoneHelper {
     MediaRecorder recorder;
 
     // File Output
-    MicrophonePipe pipe = null;
+    // MicrophonePipe pipe = null;
+    MicrophoneFS fs;
 
     // Background Task for Commands
-    MicrophoneReaderTask readerTask = null;
+    //MicrophoneReaderTask readerTask = null;
 
 
     public MicrophoneHelper(CommandHandler handle){
         this.handle = handle;
-        this.pipe = new MicrophonePipe();
+        //this.pipe = new MicrophonePipe();
+        this.fs = new MicrophoneFS();
     }
 
     public boolean onRequestPermission(Activity activity){
@@ -70,25 +73,37 @@ public class MicrophoneHelper {
     }
 
     public boolean startRecording(Activity activity){
+        fs.setupFile(activity);
+
         if(recorder == null && hasPermission){
             recorder = new MediaRecorder();
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            recorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
-            recorder.setOutputFile(pipe.getReadDescriptor());
+            recorder.setOutputFile(fs.getFile().getPath());
+            //recorder.setOutputFile(pipe.getWriteDescriptor());
+            recorder.setOnErrorListener(new MediaRecorder.OnErrorListener() {
+                @Override
+                public void onError(MediaRecorder mr, int what, int extra) {
+                    Log.i(TAG, "Error");
+                }
+            });
 
             // Setup reading in the background
-            readerTask = new MicrophoneReaderTask(activity, pipe, handle);
+            // readerTask = new MicrophoneReaderTask(activity, pipe, handle);
             try{
                 recorder.prepare();
+                recorder.start();
+                return true;
             }catch(IOException e){
                 Log.e(MicrophoneHelper.class.getName(), "Prepare failed on start record!");
                 Log.e(MicrophoneHelper.class.getName(), e.toString());
-                return false;
+            }catch(Exception e){
+                Log.e(TAG, "Exception Occurred!");
+                Log.e(TAG, e.toString());
             }
 
-            recorder.start();
-            return true;
+            return false;
         }else if(!hasPermission){
             Log.e(MicrophoneHelper.class.getName(), " Tried to record without permission!");
         }else{
@@ -104,15 +119,13 @@ public class MicrophoneHelper {
             recorder.reset();
             recorder.release();
             recorder = null;
-            readerTask.shouldStop();
             return true;
         }
 
         return false;
     }
 
-    public void tryRecording(Activity activity){
-        Log.d(MainActivity.class.getName(), "Starting the recording!");
-        startRecording(activity);
+    public MicrophoneFS getFileSystem(){
+        return this.fs;
     }
 }

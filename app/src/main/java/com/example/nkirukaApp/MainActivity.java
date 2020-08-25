@@ -122,13 +122,7 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
     @Override   // when the app resumes (lifecycle state), want to open the camera again
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume");
-        if(mCameraHelper != null) {
-            Log.d(TAG, "Resuming Camera");
-            mCameraHelper.startBackgroundThread();
-            mCameraHelper.tryStartPreview(this, textureListener);
-            mCameraFragment.setButtonListener(buttonListener);
-        }
+        turnOnIO();
     }
 
     @Override   // when the app is paused (lifecycle state), want to close the camera so other apps can use it
@@ -140,18 +134,6 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
             mCameraHelper.stopBackgroundThread();
         }
         super.onPause();
-    }
-
-    @Override
-    protected void onStop() {
-        mMicHelper.stopRecording();
-        super.onStop();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        turnOnIO();
     }
         
 
@@ -205,18 +187,24 @@ public class MainActivity extends AppCompatActivity implements CommandHandler {
     }
 
     private void turnOnIO(){
-        if(mCameraHelper.requestPermission(this)){
-            Log.d(MainActivity.class.getName(), "Already Had Cam Permission!");
-        }else{
-            Log.d(MainActivity.class.getName(), "Grabbed Cam Permission!");
-            // Can Only Grab 1 permission at a time!
-            return;
+        Log.d(TAG, "onResume");
+        if(mCameraHelper != null) {
+            Log.d(TAG, "Resuming Camera");
+            mCameraHelper.startBackgroundThread();
+            mCameraHelper.tryStartPreview(this, textureListener);
+            mCameraFragment.setButtonListener(buttonListener);
+            if(mCameraHelper.requestPermission(this)){
+                Log.d(MainActivity.class.getName(), "Already Had Cam Permission!");
+            }else{
+                Log.d(MainActivity.class.getName(), "Grabbed Cam Permission!");
+                // Can Only Grab 1 permission at a time!
+                return;
+            }
         }
 
         Log.d(MainActivity.class.getName(), "Starting The Recording");
         if(mMicHelper.onRequestPermission(this)){
             Log.d(MainActivity.class.getName(), "Already Had Mic Permission!");
-            mMicHelper.tryRecording(this);
         }else{
             Log.d(MainActivity.class.getName(), "Grabbed Mic Permission!");
         }
